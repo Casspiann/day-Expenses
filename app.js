@@ -5,6 +5,7 @@ const cors = require('cors');
 const Sequelize = require('sequelize');
 
 const User = require('./model/user');
+const Expense = require('./model/expenses');
 const sequelize = require('./util/database');
 const { error } = require('console');
 const bcrypt = require('bcrypt');
@@ -23,6 +24,34 @@ function isStringInvalid(string){
   return false;
 }
 }
+
+app.post('/expenses/add-expens', async (req, res, next) => {
+  try {
+    // Corrected variable name
+    const amount = req.body.expen;
+    const description = req.body.desc;
+    const category = req.body.cate;
+    // Check if the amount is missing or invalid
+    if (!amount || isNaN(parseFloat(amount))) {
+      return res.status(401).json({ err: "Bad Parameter, Invalid or Missing Amount" });
+    }
+
+   
+
+    // Create a new expense record in your database using Sequelize
+    const expense = await Expense.create({
+      amount, // Updated variable name
+      description,
+      category
+    });
+
+    // Respond with the created expense data or a success message
+    res.status(201).json({ newExpense: expense });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'An error occurred' });
+  }
+});
 
 app.post('/users/login', async (req, res, next) => {
   try {
