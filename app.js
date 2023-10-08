@@ -7,11 +7,22 @@ const Sequelize = require('sequelize');
 const User = require('./model/user');
 const sequelize = require('./util/database');
 const { error } = require('console');
+const bcrypt = require('bcrypt');
+
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+function isStringInvalid(string){
+  if(string == undefined || string.length === 0){
+    return true;
+  }
+  else
+{
+  return false;
+}
+}
 
 app.post('/users/login', async (req, res, next) => {
   try {
@@ -25,12 +36,19 @@ app.post('/users/login', async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Compare the provided password with the password stored in the database (plaintext comparison)
-    if (password === user.password) {
-      res.status(200).json({ message: 'Successfully Logged In' });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
-    }
+    // Compare the provided password with the hashed password stored in the database using bcrypt
+    bcrypt.compare(password, user.password, (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'An error occurred while comparing passwords' });
+      }
+
+      if (result) {
+        res.status(200).json({ message: 'Successfully Logged In' });
+      } else {
+        res.status(401).json({ message: 'Invalid email or password' });
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'An error occurred' });
@@ -39,14 +57,32 @@ app.post('/users/login', async (req, res, next) => {
 
 app.post('/users/signup', async (req, res, next) => {
   try {
-    let name = req.body.name; // Lowercase 'name' variable
-    let email = req.body.email;
-    let password = req.body.password;
-    console.log(email);
+    const name = req.body.name; // Lowercase 'name' variable
+    const email = req.body.email;
+    const password = req.body.password;
 
-    // Send a response back to the client
-    const createdUser = await User.create({ name:name, email:email, password:password }); // Use 'name', 'email', and 'password'
-    res.status(201).json({ message: 'User created successfully', name }); // Use 'name' in the response JSON
+    // Check if any of the input fields are invalid
+    if (isStringInvalid(name) || isStringInvalid(email) || isStringInvalid(password)) {
+      return res.status(401).json({ err: "Bad Parameter, Something is missing" });
+    }
+
+    // Hash the password using bcrypt
+    bcrypt.hash(password, 10, async (err, hash) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'An error occurred while hashing the password' });
+      }
+
+      // Create a user with the hashed password
+      try {
+        const createdUser = await User.create({ name, email, password: hash });
+        res.status(201).json({ message: 'User created successfully' });
+      } catch (userCreationError) {
+        console.error(userCreationError);
+        res.status(500).json({ message: 'An error occurred while creating the user' });
+      }
+    });
+
   } catch (error) {
     // Handle errors here and send an appropriate error response
     console.error(error);
