@@ -319,9 +319,11 @@ const cors = require('cors');
 const sequelize = require('./util/database');
 const userRoutes = require('./routes/user');
 const expenseRoutes = require('./routes/expense');
+const purchaseRoutes = require('./routes/purchase');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Expense = require('./model/expenses');
+const Order = require('./model/orders');
 
 const app = express();
 app.use(express.json());
@@ -335,9 +337,13 @@ const User = require('./model/user');
 // Define associations between User and Expense models
 User.hasMany(Expense);
 Expense.belongsTo(User);
+User.hasMany(Order);
+Order.belongsTo(User);
 
 app.use('/users', userRoutes);
 app.use('/expenses', expenseRoutes);
+app.use('/purchase',purchaseRoutes);
+
 /*app.get('/expenses/get-expenses', async (req, res, next) => {
   try {
     const expenses = await Expense.findAll();
@@ -347,7 +353,7 @@ app.use('/expenses', expenseRoutes);
   }
 });*/
 
-sequelize.sync({ force: true }).then((result) => {
+sequelize.sync().then((result) => {
   app.listen(4000, () => {
     console.log('Server is running on port 4000');
   });
