@@ -1,6 +1,7 @@
 const Expense = require('../model/expenses');
 
 exports.addExpense = async (req, res, next) => {
+  
   try {
     const Expens = req.body.expen;
     const Description = req.body.desc;
@@ -14,7 +15,7 @@ exports.addExpense = async (req, res, next) => {
         userId: req.user.id
     });
 
-    res.status(201).json({ newExpense: data });
+    res.status(201).json({ newExpense: data, message:"Successfully add Expence" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An error occurred' });
@@ -25,7 +26,7 @@ exports.getExpense = async (req, res, next) => {
     try {
        //we can use magic function =  req.user.getExpense();
       const expenses = await Expense.findAll({where:{userId: req.user.id}});
-      res.status(200).json({ allExpense: expenses });
+      res.status(200).json({ allExpense: expenses});
     } catch (error) {
       res.status(500).json({ error: error });
     }
@@ -39,8 +40,9 @@ exports.deleteExpense = async (req, res, next) => {
       return res.status(400).json({ error: 'Id is Missing' });
     }
     //console.log("idddd>>>>>>>>>>>>",)
-    await Expense.destroy({ where: { id: uid,userId : req.user.id } });
-    res.sendStatus(200);
+    const deleteExpences = await Expense.destroy({ where: { id: uid,userId : req.user.id } });
+    //console.log(",,,,,,,,,,,,,"+deleteExpences);
+    res.sendStatus(200).json({message:deleteExpences});
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });

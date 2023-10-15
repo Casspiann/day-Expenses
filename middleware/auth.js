@@ -12,7 +12,7 @@ const authenticate = (req,res,next)=>{
         const user = jwt.verify(token,'secretkey');
         console.log("user>>>>>>",user.userId);
         User.findByPk(user.userId).then(user=>{
-            console.log(user);
+           // console.log(user);
             req.user = user;
             next()
             

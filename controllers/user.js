@@ -7,18 +7,19 @@ function isStringInvalid(string) {
 }
 
 // Function to generate JWT access token
-function generateAccessToken(id, name) {
+function generateAccessToken(id, name, ispremiumuser) {
     
-    return jwt.sign({ userId: id, name }, 'secretkey');
+    return jwt.sign({ userId: id, name , ispremiumuser }, 'secretkey');
 }
 
 exports.login = async (req, res, next) => {
     try {
         const email = req.body.email;
         const password = req.body.password;
-
+        
         // Retrieve the user from the database by email
         const user = await User.findOne({ where: { email } });
+        //console.log("................................",user);
 
         if (!user) {
             return res.status(401).json({ message: 'Invalid email or password' });
@@ -28,7 +29,7 @@ exports.login = async (req, res, next) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (passwordMatch) {
-            const token = generateAccessToken(user.id, user.name);
+            const token = generateAccessToken(user.id, user.name, user.ispremiumuser);
             res.status(200).json({ message: 'Successfully Logged In', token });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });

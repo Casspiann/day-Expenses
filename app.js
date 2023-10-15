@@ -324,6 +324,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Expense = require('./model/expenses');
 const Order = require('./model/orders');
+const premiumFeatureRoutes = require('./routes/premiumFeature');
+
 
 const app = express();
 app.use(express.json());
@@ -335,23 +337,19 @@ const User = require('./model/user');
 //const Expense = require('./model/expenses');
 
 // Define associations between User and Expense models
-User.hasMany(Expense);
-Expense.belongsTo(User);
-User.hasMany(Order);
-Order.belongsTo(User);
+
 
 app.use('/users', userRoutes);
 app.use('/expenses', expenseRoutes);
 app.use('/purchase',purchaseRoutes);
+app.use('/premium', premiumFeatureRoutes );
 
-/*app.get('/expenses/get-expenses', async (req, res, next) => {
-  try {
-    const expenses = await Expense.findAll();
-    res.status(200).json({ allExpense: expenses });
-  } catch (error) {
-    res.status(500).json({ error: error });
-  }
-});*/
+
+
+User.hasMany(Expense);
+Expense.belongsTo(User);
+User.hasMany(Order);
+Order.belongsTo(User);
 
 sequelize.sync().then((result) => {
   app.listen(4000, () => {
