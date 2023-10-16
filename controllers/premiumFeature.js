@@ -9,7 +9,7 @@ const sequelize = require('../util/database');
 exports.getUserLeaderboard = async(req,res,next)=>{
     try{
         const leaderBoardOfUser = await User.findAll({
-          attributes:['id','name',
+         /* attributes:['id','name',
           [sequelize.fn('sum', sequelize.cast(sequelize.col('expenses.expenceAmmount'), 'DECIMAL')), 'totalCost']
         ],
         include:[
@@ -18,8 +18,8 @@ exports.getUserLeaderboard = async(req,res,next)=>{
             attributes:[]
           }
         ],
-        group:['user.id'],
-        order:[[sequelize.col('totalCost'),'DESC']]
+        group:['user.id'],*/
+        order:[[sequelize.col('totalExpenses'),'DESC']]
 
         });
        /* const expenses = await Expense.findAll({
