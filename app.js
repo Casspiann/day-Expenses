@@ -320,15 +320,22 @@ const sequelize = require('./util/database');
 const userRoutes = require('./routes/user');
 const expenseRoutes = require('./routes/expense');
 const purchaseRoutes = require('./routes/purchase');
+const resetPasswordRoutes = require('./routes/resetpassword')
+
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Expense = require('./model/expenses');
 const Order = require('./model/orders');
+//const Forgotpassword = require('./models/forgotpassword');
 const premiumFeatureRoutes = require('./routes/premiumFeature');
 
 
 const app = express();
 app.use(express.json());
+const dotenv = require('dotenv');
+
+// get config vars
+dotenv.config();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -343,6 +350,7 @@ app.use('/users', userRoutes);
 app.use('/expenses', expenseRoutes);
 app.use('/purchase',purchaseRoutes);
 app.use('/premium', premiumFeatureRoutes );
+app.use('/password', resetPasswordRoutes);
 
 
 
