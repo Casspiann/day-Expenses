@@ -1,8 +1,9 @@
 const Expense = require('../model/expenses');
 const User = require('../model/user');
+const sequelize = require('../util/database');
 
 exports.addExpense = async (req, res, next) => {
-  
+  const t = await sequelize.transaction();
   try {
     const Expens = req.body.expen;
     const Description = req.body.desc;
@@ -14,14 +15,16 @@ exports.addExpense = async (req, res, next) => {
         description: Description,
         category: Category,
         userId: req.user.id
-    });
+    },{transaction:t});
     const totalExpenses = Number(req.user.totalExpenses) + Number(Expens);
      console.log(totalExpenses); 
      await User.update({
       totalExpenses : totalExpenses
-     },{where :{ id : req.user.id}})
+     },{where :{ id : req.user.id},transaction:t})
+     await t.commit();
     res.status(201).json({ newExpense: data, message:"Successfully add Expence" });
   } catch (error) {
+     await t.rollback();
     console.error(error);
     res.status(500).json({ error: 'An error occurred' });
   }
@@ -37,19 +40,66 @@ exports.getExpense = async (req, res, next) => {
     }
   };
 
-exports.deleteExpense = async (req, res, next) => {
+/*exports.deleteExpense = async (req, res, next) => {
+  let t = await sequelize.transaction();
   try {
     const uid = req.params.id;
 
     if (!uid) {
       return res.status(400).json({ error: 'Id is Missing' });
     }
-    //console.log("idddd>>>>>>>>>>>>",)
-    const deleteExpences = await Expense.destroy({ where: { id: uid,userId : req.user.id } });
-    //console.log(",,,,,,,,,,,,,"+deleteExpences);
-    res.sendStatus(200).json({message:deleteExpences});
+    const expenses = await Expense.findOne({ where: { id: uid, userId: req.user.id },transaction:t });
+    if (!expenses) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+   // console.log("..................E......."+expenses.expenceAmmount);
+    await expenses.destroy({ transaction: t });
+    const totalExpenses = Number(req.user.totalExpenses) - Number(expenses.expenceAmmount);
+
+    await t.commit()
+    res.sendStatus(200).json({ message: 'Expense deleted successfully' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });
   }
+};*/
+exports.deleteExpense = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const uid = req.params.id;
+
+    if (!uid) {
+      return res.status(400).json({ error: 'Id is Missing' });
+    }
+
+    // Check if the expense with the given ID exists and belongs to the user
+    const expense = await Expense.findOne({ where: { id: uid, userId: req.user.id } });
+
+    if (!expense) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    // Delete the expense without subtracting from the user's total expenses
+    await expense.destroy({ transaction: t });
+
+    const totalExpenses = Number(req.user.totalExpenses) - Number(expense.expenceAmmount);
+
+    // Update the user's total expenses
+    await User.update(
+      { totalExpenses: totalExpenses },
+      { where: { id: req.user.id }, transaction: t }
+    );
+
+    // Commit the transaction
+    await t.commit();
+
+    // Send a success response
+    res.status(200).json({ message: 'Expense deleted successfully' });
+  } catch (err) {
+    // Roll back the transaction in case of an error
+    await t.rollback();
+    console.error(err);
+    res.status(500).json({ error: err });
+  }
 };
+
