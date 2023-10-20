@@ -326,7 +326,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Expense = require('./model/expenses');
 const Order = require('./model/orders');
-//const Forgotpassword = require('./models/forgotpassword');
+const Forgotpassword = require('./model/forgotpassword');
 const premiumFeatureRoutes = require('./routes/premiumFeature');
 
 
@@ -358,6 +358,8 @@ User.hasMany(Expense);
 Expense.belongsTo(User);
 User.hasMany(Order);
 Order.belongsTo(User);
+User.hasMany(Forgotpassword);
+Forgotpassword.belongsTo(User);
 
 sequelize.sync().then((result) => {
   app.listen(4000, () => {

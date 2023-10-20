@@ -1,56 +1,79 @@
+const Sib  = require('sib-api-v3-sdk');
+const dotenv = require('dotenv');
 const uuid = require('uuid');
-const sgMail = require('@sendgrid/mail');
+
+
+// get config vars
+dotenv.config();
 const bcrypt = require('bcrypt');
+const User = require('../model/user');
+const Forgotpassword = require('../model/forgotpassword');
 
-const User = require('../models/users');
-const Forgotpassword = require('../models/forgotpassword');
+const client = Sib.ApiClient.instance;
+const apiKey = client.authentications['api-key'];
+apiKey.apiKey = process.env.API_KEY;
 
-const forgotpassword = async (req, res) => {
-    try {
-        const { email } =  req.body;
-        const user = await User.findOne({where : { email }});
-        if(user){
-            const id = uuid.v4();
-            user.createForgotpassword({ id , active: true })
+
+
+
+
+exports.forgotpassword = async (req, res) => {
+    try{
+    const  Email  = req.body.email;
+    const user = await User.findOne({where : { Email }});
+    if(user){
+        const id = uuid.v4();
+        console.log(id);
+        user.createForgotpassword({ id , active: true })
                 .catch(err => {
                     throw new Error(err)
                 })
+        
 
-            sgMail.setApiKey(process.env.SENGRID_API_KEY)
-
-            const msg = {
-                to: email, // Change to your recipient
-                from: 'yj.rocks.2411@gmail.com', // Change to your verified sender
-                subject: 'Sending with SendGrid is Fun',
-                text: 'and easy to do anywhere, even with Node.js',
-                html: `<a href="http://localhost:4000/password/resetpassword/${id}">Reset password</a>`,
-            }
-
-            sgMail
-            .send(msg)
-            .then((response) => {
-
-                // console.log(response[0].statusCode)
-                // console.log(response[0].headers)
-                return res.status(response[0].statusCode).json({message: 'Link to reset password sent to your mail ', sucess: true})
-
-            })
-            .catch((error) => {
-                throw new Error(error);
-            })
-
-            //send mail
-        }else {
-            throw new Error('User doesnt exist')
+   
+        const trnsEmailApi = new Sib.TransactionalEmailsApi();
+        const sender ={
+            email:"tarunrana1649@gmail.com",
+            name:'Casspian'
         }
-    } catch(err){
-        console.error(err)
-        return res.json({ message: err, sucess: false });
-    }
+        const receiver = [{
+            email:Email
+        }]
+        //https://example.com/password/resetpassword/${id}
+    //console.log(process.env.API_KEY);
+    const senderEmail = await trnsEmailApi.sendTransacEmail({
+        sender,
+        to: receiver,
+        subject: 'Sending with SendinBlue is Fun',
+        textContent: 'and easy to do anywhere, even with Node.js',
+        htmlContent:`<h2>Reset Your Password </h2><a href="http://localhost:4000/password/resetpassword/${id}">Click it</a>`
+        
+    })
+    console.log(senderEmail);
+    //console.log(process.env.API_KEY);
+    
+    //console.log(sender);
+    //console.log(receiver);
+    //console.log(trnsEmailApi);
+    
 
+    res.status(202).json({ message:'Link to reset password sent to your mail', success: true });
+        }
+    else
+        {
+            throw new Error('User doesnt exist')
+
+        }
+} catch(error){
+    res.status(500).json({error});
 }
 
-const resetpassword = (req, res) => {
+    
+};
+
+
+
+exports.resetpassword = (req, res) => {
     const id =  req.params.id;
     Forgotpassword.findOne({ where : { id }}).then(forgotpasswordrequest => {
         if(forgotpasswordrequest){
@@ -76,7 +99,7 @@ const resetpassword = (req, res) => {
     })
 }
 
-const updatepassword = (req, res) => {
+exports.updatepassword = (req, res) => {
 
     try {
         const { newpassword } = req.query;
@@ -115,9 +138,3 @@ const updatepassword = (req, res) => {
 
 }
 
-
-module.exports = {
-    forgotpassword,
-    updatepassword,
-    resetpassword
-}
