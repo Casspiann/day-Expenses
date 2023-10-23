@@ -23,8 +23,10 @@ exports.forgotpassword = async (req, res) => {
     const user = await User.findOne({where : { Email }});
     if(user){
         const id = uuid.v4();
-        console.log(id);
-        user.createForgotpassword({ id , active: true })
+        //console.log(id);
+        //console.log(Email);
+        //console.log(process.env.API_KEY);
+        await user.createForgotpassword({ id , active: true })
                 .catch(err => {
                     throw new Error(err)
                 })
@@ -39,8 +41,9 @@ exports.forgotpassword = async (req, res) => {
         const receiver = [{
             email:Email
         }]
-        //https://example.com/password/resetpassword/${id}
-    //console.log(process.env.API_KEY);
+        console.log(sender);
+        console.log(receiver);
+        
     const senderEmail = await trnsEmailApi.sendTransacEmail({
         sender,
         to: receiver,
@@ -50,14 +53,10 @@ exports.forgotpassword = async (req, res) => {
         
     })
     console.log(senderEmail);
-    //console.log(process.env.API_KEY);
-    
-    //console.log(sender);
-    //console.log(receiver);
-    //console.log(trnsEmailApi);
+ 
     
 
-    res.status(202).json({ message:'Link to reset password sent to your mail', success: true });
+    res.status(202).json({ message:'Link to reset password sent to you r mail', success: true });
         }
     else
         {
