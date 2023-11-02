@@ -2,6 +2,8 @@ const Expense = require('../model/expenses');
 const User = require('../model/user');
 const sequelize = require('../util/database');
 const AWS = require('aws-sdk'); // Import the AWS SDK
+
+
 const s3 = new AWS.S3(); 
 
 exports.addExpense = async (req, res, next) => {
@@ -110,18 +112,17 @@ exports.downloadExpenses = async (req,res)=>{
     if (!req.user.ispremiumuser) {
       return res.status(401).json({ success: false, message: 'User is not a premium User' });
     }
-
-    // Generate a pre-signed URL for the S3 file
+  
     const s3Params = {
       Bucket: 'casspian',
-      Key: 'https://s3.console.aws.amazon.com/s3/object/casspian?region=eu-north-1&prefix=NodeJsprojecttask8.png', // Adjust this to your S3 file's path
+      Key: 'NodeJsprojecttask8.png',
+      ResponseContentDisposition: 'attachment',
       Expires: 3600, // URL expiration time in seconds (1 hour in this example)
     };
 
     // Generate the pre-signed URL
-    const fileUrl = s3.getSignedUrl('getObject', s3Params);
-
-    // Return the file URL to the frontend
+    const fileUrl = await s3.getSignedUrl('getObject', s3Params);
+    console.log(fileUrl);
     res.status(201).json({ success: true, fileUrl });
   } catch (error) {
     console.error(error);

@@ -313,10 +313,14 @@ sequelize.sync({ force: true }).then((result) => {
 });*/
 
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const sequelize = require('./util/database');
+const helmet = require('helmet');
+const morgan = require('morgan'); 
+const compression = require('compression');
 const userRoutes = require('./routes/user');
 const expenseRoutes = require('./routes/expense');
 const purchaseRoutes = require('./routes/purchase');
@@ -330,6 +334,14 @@ const Forgotpassword = require('./model/forgotpassword');
 const premiumFeatureRoutes = require('./routes/premiumFeature');
 
 
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname,'access.log'),
+  {
+    flags:'a'
+  }
+)
+
+
 const app = express();
 app.use(express.json());
 const dotenv = require('dotenv');
@@ -337,6 +349,9 @@ const dotenv = require('dotenv');
 // get config vars
 dotenv.config();
 app.use(cors());
+app.use(helmet());
+app.use(compression());
+app.use(morgan('combined',{stream:accessLogStream}));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -351,6 +366,7 @@ app.use('/expenses', expenseRoutes);
 app.use('/purchase',purchaseRoutes);
 app.use('/premium', premiumFeatureRoutes );
 app.use('/password', resetPasswordRoutes);
+
 
 
 
